@@ -10,7 +10,7 @@ class MainConfig(AppConfig):
 
     def ready(self):
         from . import\
-        rabbitmq, healthcheck, signals, initial_migrations
+        healthcheck, signals, initial_migrations
         plugins.plugin_dir.register(healthcheck.CeleryHealthCheckAPIBackend)
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Analytic.settings')
 

@@ -101,13 +101,6 @@ if not DEBUG:
     SECRET_KEY = os.environ.get('SECRET_KEY')
 
 
-    RABBITMQ_USER = os.environ.get('RABBITMQ_USER', None)
-    RABBITMQ_PASSWORD = os.environ.get('RABBITMQ_PASSWORD', None)
-    RABBITMQ_VHOST = os.environ.get('RABBITMQ_VHOST', None)
-    RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST', None)
-    RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT', None)
-
-
     RABBITMQ_BROKER_USER = os.environ.get('RABBITMQ_BROKER_USER', None)
     RABBITMQ_BROKER_PASSWORD = os.environ.get('RABBITMQ_BROKER_PASSWORD', None)
     RABBITMQ_BROKER_VHOST = os.environ.get('RABBITMQ_BROKER_VHOST', None)

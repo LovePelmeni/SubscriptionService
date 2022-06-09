@@ -29,6 +29,12 @@ email="Superuser@gmail.com", password="Password")' | python manage.py shell
 
 echo "Running Services Integration Tests."
 python manage.py test main.services_integration_tests
+
+  if [$? -ne 0]; then
+    echo "Failed to start celery worker. Exiting..."
+    exit 1;
+    else continue
+  fi
 echo "Run..."
 
 echo "Running Celery..."

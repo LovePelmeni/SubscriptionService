@@ -20,17 +20,16 @@ class MongoIntegrationTestCase(TestCase):
             raise socket.timeout(msg)
 
 
-
 class RabbitmqExternalIntegrationTestCase(TestCase):
 
     def test_connection_established(self):
         try:
-            pika.BlockingConnection(
+            channel = pika.BlockingConnection(
             parameters=pika.ConnectionParameters(
-            host=settings.RABBITMQ_HOST, port=settings.RABBITMQ_PORT,
-            virtual_host=settings.RABBITMQ_VHOST,
-            credentials=pika.PlainCredentials(settings.RABBITMQ_USER, settings.RABBITMQ_PASSWORD)))
-
+            host=settings.RABBITMQ_BROKER_HOST, port=settings.RABBITMQ_BROKER_PORT,
+            virtual_host=settings.RABBITMQ_BROKER_VHOST,
+            credentials=pika.PlainCredentials(settings.RABBITMQ_BROKER_USER, settings.RABBITMQ_BROKER_PASSWORD)))
+            channel.close()
         except(requests.exceptions.RequestException,) as exception:
             msg = 'Rabbitmq External Server Does Not Responding...'
             raise exception(msg)

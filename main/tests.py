@@ -145,39 +145,16 @@ class TestCheckSubPermissionStatusCase(TestCase):
 class TestCustomerEventsViaRabbitMQCase(TestCase):
 
     def setUp(self):
-        from django.conf import settings
-        self.rabbitmq_auth_credentials = \
-        {'credentials': pika.PlainCredentials(**{'username': settings.RABBITMQ_USER, 'password': settings.RABBITMQ_PASSWORD}),
-        'host': getattr(settings, 'RABBITMQ_HOST'), 'virtual_host': getattr(settings, 'RABBITMQ_VHOST'),
-        'port': settings.RABBITMQ_PORT}
-
-        self.connection_channel = pika.BlockingConnection(parameters=pika.ConnectionParameters(**self.rabbitmq_auth_credentials)).channel()
-        self.logger = logging.getLogger(__name__)
-
-        self.deletion_test_user = APICustomer.objects.create(username='TestCustomer')
-        self.test_delete_api_customer_credentials = {'user_id': self.deletion_test_user.id}
-        self.test_creation_api_credentials = {'username': 'NewCustomer'}
-
-        self.creation_user_api_queue_credentials = {'routing_key': 'user_created'}
-        self.deletion_user_api_queue_credentials = {'routing_key': "user_deleted"}
+        self.customer_data = {}
+        self.customer = APICustomer.objects.create(username='SomeUser')
 
     def test_send_creation_event(self):
 
-        self.connection_channel.basic_publish(**self.creation_user_api_queue_credentials, exchange='exchange',
-        body=json.dumps(self.test_creation_api_credentials).encode('utf-8'),
-        properties=pika.BasicProperties(content_type='text/plain', delivery_mode=True), mandatory=True)
-        self.assertEqual(len(APICustomer.objects.all()), 1)
+        response = self.client.post('http://localhost:8076/create/customer/', data=self.customer_data)
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(APICustomer.objects.all()), 2)
 
     def test_send_deletion_event(self):
-
-        self.connection_channel.basic_publish(**self.deletion_user_api_queue_credentials, exchange='exchange',
-        body=json.dumps(self.test_delete_api_customer_credentials).encode('utf-8'),
-        properties=pika.BasicProperties(content_type='text/plain', delivery_mode=True), mandatory=True)
+        response = self.client.delete('http://localhost:8076/delete/customer/?user_id=%s' % self.customer.id)
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
         self.assertLessEqual(len(APICustomer.objects.all()), 1)
-
-
-    def tearDown(self) -> None:
-        self.connection_channel.close()
-        return super().tearDown()
-
-

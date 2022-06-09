@@ -274,6 +274,7 @@ class ApplySubscriptionAPIView(viewsets.ViewSet):
             return django.http.HttpResponseBadRequest()
 
         except() as exception:
+            transaction.rollback()
             raise exception
 
 

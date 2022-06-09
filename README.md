@@ -1,5 +1,8 @@
     
-#               Introduction
+# Subscription Service
+
+Docs Link: ('Docs')["http://localhost:8077/docs/"]
+
     SUBSCRIPTION SERVICE (EXTENSION FOR WEB APP) 
 
                 Date: 24.05.22
@@ -19,21 +22,21 @@ PostgresSQL as a database for more structured data.
 
 # Technologies
 
-Databases:
+##Databases
     
     PostgresSQL
     MongoDB 
     Redis
 
-Message Brokers: 
+##Message Brokers
     
     RabbitMQ 
 
-Web Servers:
+##Web Server
     
     Nginx 
 
-Language: 
+##Language
 
     Python 
 

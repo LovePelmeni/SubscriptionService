@@ -14,22 +14,7 @@ import logging
 
 # import firebase
 
-# task_expired = django.dispatch.dispatcher.Signal()
-user_created = django.dispatch.dispatcher.Signal()
-user_deleted = django.dispatch.dispatcher.Signal()
-
-
 logger = logging.getLogger(__name__)
-
-
-@django.dispatch.dispatcher.receiver(user_created)
-def create_user(sender, **kwargs):
-    APICustomer.objects.create(**kwargs)
-
-@django.dispatch.dispatcher.receiver(user_deleted)
-def delete_user(sender, **kwargs):
-    APICustomer.objects.delete(**kwargs)
-
 
 class APICustomer(models.Model):  # represents the Main App Custom User Model, but locally in this application.
 
@@ -49,7 +34,7 @@ class APICustomer(models.Model):  # represents the Main App Custom User Model, b
         return self.balance
 
     def delete(self, using=None, **kwargs):
-        user_deleted.send(sender=self, username=self.username)
+        return super().delete(using=using, **kwargs)
 
     def has_sub_permission(self, sub_id):
         return int(sub_id) in self.purchased_subs.values_list('id', flat=True)

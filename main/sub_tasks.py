@@ -23,6 +23,7 @@ def expire_subscription(purchaser_id,  subscription_id, idempotency_key, task_id
         document = mongo_api.get_subscription_document(idempotency_key)
         delete_subscription_task(task_id=document.get('subscription_task_id'))
         mongo_api.mark_as_inactive(idempotency_key=idempotency_key)
+
         signals.remove_purchaser.send(sender=expire_subscription, purchaser_id=purchaser_id,
         subscription_id=subscription_id)
         logger.debug('subscription has been expired.')
@@ -76,4 +77,3 @@ def create_subscription_task(document, idempotency_key, subscription_id, purchas
 
     except(django.core.exceptions.ObjectDoesNotExist,):
         raise django.core.exceptions.ObjectDoesNotExist
-
