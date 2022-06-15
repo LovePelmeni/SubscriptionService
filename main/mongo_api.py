@@ -1,12 +1,17 @@
-import pymongo
+import pymongo.errors
 import datetime
 import django.conf, logging
-# from . import models
+from . import exceptions
 
-client = pymongo.MongoClient(getattr(django.conf.settings, 'MONGO_DATABASE_URL'), authMechanism='SCRAM-SHA-1')
-sub_database = client['mongo_sub_db']
-collection = sub_database.get_collection(name='sub_collection')
-session = client.start_session()
+
+# from . import models
+try:
+    client = pymongo.MongoClient(getattr(django.conf.settings, 'MONGO_DATABASE_URL'), authMechanism='SCRAM-SHA-1')
+    sub_database = client['mongo_sub_db']
+    collection = sub_database.get_collection(name='sub_collection')
+    session = client.start_session()
+except(pymongo.errors.ServerSelectionTimeoutError,):
+    raise exceptions.MongoDatabaseIsNotRunning()
 
 logger = logging.getLogger(__name__)
 

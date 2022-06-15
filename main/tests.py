@@ -106,10 +106,12 @@ class TestObtainAppliedSubsCase(TestCase):
     def test_get_single_subscription(self):
         response = self.client.get('http://localhost:8076/get/purchased/sub/?idempotency_key=%s' % self.customer_id)
         self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertIn('queryset', json.loads(response.read()).keys())
 
     def test_get_applied_subscription_list(self):
         response = self.client.get('http://localhost:8076/get/purchased/subs/?customer_id=%s' % self.customer_id)
         self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertIn('queryset', json.loads(response.read()).keys())
 
 
 class TestCatalogSubCase(TestCase):
@@ -158,3 +160,43 @@ class TestCustomerEventsViaRabbitMQCase(TestCase):
         response = self.client.delete('http://localhost:8076/delete/customer/?user_id=%s' % self.customer.id)
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         self.assertLessEqual(len(APICustomer.objects.all()), 1)
+
+
+
+
+import pytest, unittest.mock
+
+class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
+
+
+    def mocked_verification_code(self):
+        pass
+
+    def mocked_deletion_event(self):
+        pass
+
+    def mocked_email_confirmation_request(self):
+        mocked_request = {}
+        return mocked_request
+
+    @pytest.mark.asyncio
+    @unittest.mock.patch('main.tests.TestDeleteSubscriptionFunctionalityCase.mocked_email_confirmation')
+    async def test_deletion_email_verification_endpoint(self, mocked_verify_request):
+        from . import confirmation
+
+        verify_code = mocked_verify_request.get('verification_code')
+        validated = confirmation.validate_verify_token(verify_code)
+        self.assertEquals(validated, True)
+
+        response = confirmation.process_email_confirmation(verify_code=verify_code)
+        self.assertEquals(response.status_code, 201)
+        mocked_verify_request.assert_called_once()
+
+        with self.assertRaises(exceptions.TokenValidationFailed):
+            verify_code = 'Invalid Verify Code'
+            confirmation.validate_verify_token(verify_code)
+
+
+    @unitest.mock.patch('main.tests.TestDeleteSubscriptionFunctionalityCase.mocked_deletion_event')
+    def test_process_delete_subscription(self, mocked_event):
+        pass

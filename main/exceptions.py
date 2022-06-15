@@ -5,5 +5,5 @@ from rest_framework import status
 class ExpiredSubscription(BaseException):
     pass
 
-
-
+class MongoDatabaseIsNotRunning(BaseException):
+    pass
