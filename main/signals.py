@@ -1,3 +1,4 @@
+from __future__ import annotations
 import django.dispatch.dispatcher
 from . import models
 import logging
@@ -7,6 +8,7 @@ logger = logging.getLogger(__name__)
 add_purchaser = django.dispatch.dispatcher.Signal()
 remove_purchaser = django.dispatch.dispatcher.Signal()
 user_deleted = django.dispatch.dispatcher.Signal()
+subscription_delete = django.dispatch.dispatcher.Signal()
 
 
 @django.dispatch.dispatcher.receiver(user_deleted)
@@ -40,5 +42,13 @@ def add_user_to_purchasers(sender, purchaser_id, subscription_id, **kwargs):
         logger.debug('user does not exist..')
 
 
+import asgiref.sync
+async def send_deleted_info_emails(emails: typing.List[str]):
+    """/ * Sends emails to all the users """
+    pass
+
+@django.dispatch.dispatcher.receiver(signal=subscription_delete)
+def process_subscription_delete(subscription_id: typing.Union[str | int]):
+    pass
 
 
