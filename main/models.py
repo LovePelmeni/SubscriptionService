@@ -61,7 +61,7 @@ class Subscription(models.Model):
     currency = models.CharField(verbose_name=_('Currency'), choices=currency_choices, max_length=20, null=False, default='usd')
 
     created_at = models.DateField(verbose_name=_('Expire Period'), auto_now_add=True, max_length=100, null=True)
-    purchasers = models.ManyToManyField(verbose_name=_('Purchasers'), to=APICustomer, related_name='purchased_subs')
+    purchasers = models.ManyToManyField(verbose_name=_('Purchasers'), to=APICustomer, related_name='purchased_subs', null=True)
 
 
     def __str__(self):

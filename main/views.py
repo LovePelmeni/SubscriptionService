@@ -278,29 +278,33 @@ class DeleteSubscription(views.APIView):
 
 
     def handle_exception(self, exc):
-        pass
-
+        if isinstance(exc, NotImplementedError):
+            return django.http.HttpResponseServerError()
 
     @staticmethod
-    def generate_verification_code() -> uuid.UUID:
-        pass
+    def generate_verification_code() -> typing.Union[uuid.UUID, str]:
+        return str(uuid.uuid4()) + datetime.datetime.now().strftime(fmt='%H:%Y:%d')
 
 
     def prepare_error_message(self, code: typing.Optional[int], message: typing.Optional[str]):
         return {'message': 'success' if not message else message, 'code': 200 if not code else code}
 
 
-
     @cache.cache_control(private=True)
     def post(self, request):
         try:
+            from .confirmation import confirmation
             subscription_id = request.query_params.get('subscription_id')
             customer = models.APICustomer.objects.get(id=request.query_params.get('customer_id'))
             verification_code = self.generate_verification_code()
 
             if customer.email and customer.email != '-':
-                email_verification = confirmation.EmailVerification(reason=request.data.get('reason'),
-                email=customer.email, verification_code=verification_code)
+                email_verification = confirmation.ConfirmEmailVerification(reason=request.data.get('reason'),
+                email=customer.email, verification_code=verification_code,
+                session_id=request.session.key,
+                subscription_id=subscription_id,
+                username=customer.username,
+                subscription_name=None)
 
                 request.session.update({'delete_session_credentials': {'verification_code': verification_code,
                 'subscription_id': subscription_id}})
@@ -310,7 +314,8 @@ class DeleteSubscription(views.APIView):
             return django.http.HttpResponse(status=200,
             content=json.dumps(self.response_message))
 
-        except(django.core.exceptions.ObjectDoesNotExist, django.db.utils.IntegrityError,) as exception:
+        except(django.core.exceptions.ObjectDoesNotExist, django.db.utils.IntegrityError,
+        AttributeError, TypeError, KeyError) as exception:
             logger.error('Exception: %s at DeleteSubscription Controller.' % exception)
             raise NotImplementedError
 

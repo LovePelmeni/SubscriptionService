@@ -20,11 +20,9 @@ services:
     container_name: postgresql_sub_container
     image: postgres:13.3
     environment:
-
       POSTGRES_DB: "sub_db"
       POSTGRES_USER: "postgres_sub_user"
       POSTGRES_PASSWORD: "Kirill"
-
     ports:
       - 5437:5437
     command:

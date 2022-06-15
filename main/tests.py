@@ -163,40 +163,53 @@ class TestCustomerEventsViaRabbitMQCase(TestCase):
 
 
 
+class SubscriptionDeleted(Exception):
+    pass
+
 
 import pytest, unittest.mock
+from . import models
+
 
 class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
 
+    def setUp(self) -> None:
+        from . import views
+        self.customer_id = models.APICustomer.objects.create(username='Username', email='someemail@gmail.com')
+        self.subscription_id = models.Subscription.objects.create(
+        owner_id=self.customer_id, amount=1000, currency='eur')
+        self.controller = views.DeleteSubscription()
 
     def mocked_verification_code(self):
-        pass
-
-    def mocked_deletion_event(self):
-        pass
+        return self.controller.generate_verification_code()
 
     def mocked_email_confirmation_request(self):
-        mocked_request = {}
+
+        import django.http, django.contrib.sessions.models
+        mocked_token = self.mocked_verification_code()
+        session = django.contrib.sessions.models.Session.objects.create()
+        session['verification_code'] = mocked_token
+
+        mocked_request = django.http.HttpRequest(
+        ).GET.update({'verification_code': self.mocked_verification_code(),
+        'subscription_id': self.subscription_id, 'session_id': session.key})
         return mocked_request
 
     @pytest.mark.asyncio
-    @unittest.mock.patch('main.tests.TestDeleteSubscriptionFunctionalityCase.mocked_email_confirmation')
-    async def test_deletion_email_verification_endpoint(self, mocked_verify_request):
-        from . import confirmation
+    async def test_deletion_email_verification_endpoint(self):
+        from .confirmation import confirmation
 
-        verify_code = mocked_verify_request.get('verification_code')
-        validated = confirmation.validate_verify_token(verify_code)
-        self.assertEquals(validated, True)
+        request = self.mocked_email_confirmation_request()
+        validated = confirmation.ConfirmEmailVerificationController.post(request=request)
+        self.assertEquals(validated.status_code, 200)
 
-        response = confirmation.process_email_confirmation(verify_code=verify_code)
-        self.assertEquals(response.status_code, 201)
-        mocked_verify_request.assert_called_once()
-
-        with self.assertRaises(exceptions.TokenValidationFailed):
-            verify_code = 'Invalid Verify Code'
-            confirmation.validate_verify_token(verify_code)
+    def test_process_delete_subscription(self):
+        with unittest.mock.patch('main.signals.process_subscription_delete') as mocked_event:
+            mocked_event.side_effect = SubscriptionDeleted
+            signals.process_subscription_delete(subscription_id=self.subscription_id)
+            self.assertLess(len(models.Subscription.objects.all()), 1)
+            self.assertRaises(SubscriptionDeleted)
 
 
-    @unitest.mock.patch('main.tests.TestDeleteSubscriptionFunctionalityCase.mocked_deletion_event')
-    def test_process_delete_subscription(self, mocked_event):
-        pass
+
+

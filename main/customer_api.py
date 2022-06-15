@@ -37,4 +37,3 @@ def delete_customer(request):
     return django.http.HttpResponseServerError()
 
 
-

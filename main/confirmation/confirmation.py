@@ -10,6 +10,7 @@ import django.core.mail, logging
 from django.conf import settings
 from rest_framework import status
 
+import django.urls
 from Analytic.main.signals import subscription_delete
 
 logger = logging.getLogger(__name__)
@@ -22,13 +23,11 @@ class ConfirmEmailVerificationController(views.APIView):
     @csrf.requires_csrf_token
     def post(self, request):
         try:
-            format = '' # / * deserialize verify token format.
             subscription_id = request.query_params.get('subscription_id')
             session = models.Session.objects.get(
             id=request.query_params.get('session_id')).get_decoded()
             if not session['subscription_id'] == \
-            django.core.serializers.deserialize(format,
-            request.query_params.get('verification_code')):
+            request.query_params.get('verification_code'):
                 return django.http.HttpResponse(status=400)
 
             self.process_subscription_delete(subscription_id)
@@ -42,20 +41,36 @@ class ConfirmEmailVerificationController(views.APIView):
 urlpatterns += path('confirm/delete/subscription/', ConfirmEmailVerificationController.as_view())
 class ConfirmEmailVerification(object):
 
-    def __call__(self, *args, **kwargs):
-        self.confirm(**kwargs)
+    def __init__(self,
+    reason: typing.Optional[str],
+    verification_code: str,
+    subscription_id: typing.Union[str, int],
+    username: str,
+    session_id: str,
+    email: str,
+    subscription_name: str):
 
-    def confirm(self, verification_code: str, subscription_id: str,
-    username: str, email: str, session_id: str, subscription_name: str):
+        self.reason = reason
+        self.verification_code = verification_code
+        self.subscription_id = subscription_id
+        self.username = username
+        self.session_id = session_id
+        self.email = email
+        self.subscription_name = subscription_name
+
+    def __call__(self, *args, **kwargs):
+        self.confirm()
+
+    def confirm(self):
 
         link = 'http://' + settings.APPLICATION_HOST + ':%s'\
-        % settings.APPLICATION.PORT + reverse('main:confirmation') \
+        % settings.APPLICATION.PORT + django.urls.reverse('main:confirmation') \
         + "?subscription_id=%s&verification_code=%s&session_id=%s" % (
-            subscription_id, verification_code, session_id
+            self.subscription_id, self.verification_code, self.session_id
         )
         message = "Hello, %s. You Can verify to delete your Subscription '%s' at %s" % (
-        username, subscription_name, link)
-        self.send_email(to_email=email, from_email=settings.MANAGEMENT_EMAIL, message=message)
+        self.username, self.subscription_name, link)
+        self.send_email(to_email=self.email, from_email=settings.MANAGEMENT_EMAIL, message=message)
 
     def send_email(self, to_email: str, from_email: str,  message):
         try:
@@ -67,6 +82,5 @@ class ConfirmEmailVerification(object):
             email.send()
         except(django.core.mail.BadHeaderError,) as exception:
             logger.error('Could not send email: exception: %s' % exception)
-
 
 
