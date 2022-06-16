@@ -99,7 +99,7 @@ DEFAULT_BEAT_HOURS = 0
 if not DEBUG:
 
     SECRET_KEY = os.environ.get('SECRET_KEY')
-
+    MAIN_DATABASE = 'default'
 
     RABBITMQ_BROKER_USER = os.environ.get('RABBITMQ_BROKER_USER', None)
     RABBITMQ_BROKER_PASSWORD = os.environ.get('RABBITMQ_BROKER_PASSWORD', None)
@@ -196,7 +196,7 @@ if not DEBUG:
     }
 
 else:
-
+    MAIN_DATABASE = 'default'
     SECRET_KEY = 'django-insecure-5r(afa9tiucqz!i8g(u*1$8ihk4*f7#dmr64uk0417)sm^f5hz'
 
     RABBITMQ_USER = 'rabbitmq_user'
@@ -287,7 +287,7 @@ LOGGING = {
     },
 }
 
-
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 from urllib.parse import quote_plus
 

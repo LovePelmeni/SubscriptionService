@@ -39,6 +39,12 @@ class SubCatalogSerializer(serializers.ModelSerializer):
 
 from django.utils.translation import gettext_lazy as _
 
+choices = [
+    ('usd', 'usd'),
+    ('eu', 'eu'),
+    ('rub', 'rub')
+]
+
 class ActivateSubSerializer(serializers.Serializer):
 
     subscription_name = serializers.CharField(label=_('Required Field'))

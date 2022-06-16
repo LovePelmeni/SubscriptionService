@@ -96,3 +96,13 @@ ERROR 2022-05-26 09:23:46,958 sub_api 17782 13003288576 AttributeError Exception
 ERROR 2022-05-26 09:23:50,148 sub_api 17782 13003288576 DoesNotExist Exception has occurred, while was canceling subscription.
 ERROR 2022-05-26 09:38:23,521 sub_api 18482 8665642496 AttributeError Exception has occurred, while was canceling subscription.
 ERROR 2022-05-26 09:43:14,199 sub_api 18674 8635307520 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-06-16 10:32:00,617 confirmation 33968 8595641856 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:32:00,649 confirmation 33968 8595641856 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:32:40,755 confirmation 33999 8673658368 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:32:40,789 confirmation 33999 8673658368 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:35:26,565 confirmation 34090 8596350464 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:35:26,584 confirmation 34090 8596350464 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:44:47,737 confirmation 34376 8670750208 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:44:47,757 confirmation 34376 8670750208 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: Session matching query does not exist.
+ERROR 2022-06-16 10:45:47,417 confirmation 34418 8598812160 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: 'subscription_id'
+ERROR 2022-06-16 10:45:47,435 confirmation 34418 8598812160 Seems like Session has no key "subscription_id" or That Request Session does not exist.Exception: 'subscription_id'

@@ -269,21 +269,19 @@ class DeleteSubscription(views.APIView):
     """
     / * Responding for Delete Subscription Process.
     """
-    response_message: typing.Optional[typing.Union[str, dict]] = None
+
+    response_message: typing.Optional[typing.Union[str, dict]] = {'status_code': 200,
+    'message': 'Verification Sent'}
 
     def check_permissions(self, request):
         customer = models.APICustomer.objects.get(
         id=request.query_params.get('customer_id'))
         return customer.has_sub_permission(sub_id=request.query_params.get('sub_id'))
 
-
     def handle_exception(self, exc):
         if isinstance(exc, NotImplementedError):
             return django.http.HttpResponseServerError()
-
-    @staticmethod
-    def generate_verification_code() -> typing.Union[uuid.UUID, str]:
-        return str(uuid.uuid4()) + datetime.datetime.now().strftime(fmt='%H:%Y:%d')
+        return django.http.HttpResponseServerError()
 
 
     def prepare_error_message(self, code: typing.Optional[int], message: typing.Optional[str]):
@@ -296,11 +294,10 @@ class DeleteSubscription(views.APIView):
             from .confirmation import confirmation
             subscription_id = request.query_params.get('subscription_id')
             customer = models.APICustomer.objects.get(id=request.query_params.get('customer_id'))
-            verification_code = self.generate_verification_code()
 
             if customer.email and customer.email != '-':
                 email_verification = confirmation.ConfirmEmailVerification(reason=request.data.get('reason'),
-                email=customer.email, verification_code=verification_code,
+                email=customer.email,
                 session_id=request.session.key,
                 subscription_id=subscription_id,
                 username=customer.username,
@@ -308,17 +305,15 @@ class DeleteSubscription(views.APIView):
 
                 request.session.update({'delete_session_credentials': {'verification_code': verification_code,
                 'subscription_id': subscription_id}})
-                email_verification.send()
+                email_verification.confirm()
             else:
                 self.response_message = self.prepare_response_message(code=422, message='Your Email Is Empty.')
-            return django.http.HttpResponse(status=200,
+            return django.http.HttpResponse(status=self.response_message.get('status_code'),
             content=json.dumps(self.response_message))
 
         except(django.core.exceptions.ObjectDoesNotExist, django.db.utils.IntegrityError,
         AttributeError, TypeError, KeyError) as exception:
             logger.error('Exception: %s at DeleteSubscription Controller.' % exception)
             raise NotImplementedError
-
-
 
 

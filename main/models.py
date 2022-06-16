@@ -14,7 +14,7 @@ from django.views.decorators.cache import cache_page
 import logging
 from django.utils.translation import gettext_lazy as _
 
-# import firebase
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,12 +67,8 @@ class Subscription(models.Model):
     def __str__(self):
         return self.subscription_name
 
-    def delete(self, using=None, **kwargs):
-        return super().delete(**kwargs, using=using)
+
 
     class Meta:
         verbose_name = 'Subscription'
-
-
-
 

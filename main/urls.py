@@ -1,10 +1,15 @@
 from . import views, healthcheck as health
 from django.urls import path
+
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import views as yasg_views, openapi
+
 from rest_framework import permissions
 from . import customer_api
+
+
 app_name = 'main'
+
 
 urlpatterns = [
 
@@ -29,7 +34,7 @@ urlpatterns = [
     path('healthcheck/celery/', health.CeleryHealthCheckAPIView.as_view(), name='celery-healthcheck'),
 
     path('create/customer/', customer_api.create_customer, name='create-customer'),
-    path('delete/customer/', customer_api.delete_customer, name='delete-customer')
+    path('delete/customer/', customer_api.delete_customer, name='delete-customer'),
 
 ]
 

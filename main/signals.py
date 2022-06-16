@@ -42,13 +42,38 @@ def add_user_to_purchasers(sender, purchaser_id, subscription_id, **kwargs):
         logger.debug('user does not exist..')
 
 
+def send_info_email(email, message_body: typing.Union[dict, str]):
+    import django.core.mail
+    email_message = django.core.mail.EmailMessage(
+        from_email=[getattr(settings, 'SUPPORT_EMAIL')],
+        to=email,
+        body=json.dumps(message_body),
+    )
+    email_message.fail_silently = False
+    email_message.send()
+
+
 import asgiref.sync
-async def send_deleted_info_emails(emails: typing.List[str]):
+def send_deleted_info_emails(emails: typing.List[str]):
     """/ * Sends emails to all the users """
-    pass
+    message = 'Author %s has been deleted his Subscription "%s". %s' % datetime.datetime.now()
+    for email in emails:
+        send_info_email(email,
+        message_body=message)
 
 @django.dispatch.dispatcher.receiver(signal=subscription_delete)
-def process_subscription_delete(subscription_id: typing.Union[str | int]):
-    pass
+def process_subscription_delete(subscription_id: typing.Union[str, int], **kwargs):
+    try:
+        subscription = models.Subscription.objects.get(id=subscription_id)
+        emails = [customer.email for customer in subscription.purchasers.all() if not customer.email == '-']
+        asgiref.sync.sync_to_async(send_deleted_info_emails)(emails)
+        subscription.delete()
+
+    except(django.core.exceptions.ObjectDoesNotExist, AttributeError, TypeError, KeyError) as exception:
+        logger.error('Could not process deletion for ' 
+        'Subscription with ID: %s. Exception: %s' % subscription_id, exception)
+
+
+
 
 

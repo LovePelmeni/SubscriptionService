@@ -2,9 +2,9 @@ import os
 import celery.exceptions
 
 import django.conf.urls
-import redis
+import redis, django.middleware.csrf
 
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, Client
 
 from rest_framework import status
 from django.test.utils import override_settings
@@ -12,10 +12,12 @@ from django.test.utils import override_settings
 import logging, pika, pika.exceptions
 from .models import APICustomer, Subscription
 from .sub_tasks import *
-import json
+import json, pytest
 
 from django_celery_beat import models as celery_models
 from .celery_register import celery_module as celery_application
+
+test_client = Client()
 
 
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
@@ -106,12 +108,12 @@ class TestObtainAppliedSubsCase(TestCase):
     def test_get_single_subscription(self):
         response = self.client.get('http://localhost:8076/get/purchased/sub/?idempotency_key=%s' % self.customer_id)
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        self.assertIn('queryset', json.loads(response.read()).keys())
+        self.assertIn('subscription', json.loads(response.content).keys())
 
     def test_get_applied_subscription_list(self):
         response = self.client.get('http://localhost:8076/get/purchased/subs/?customer_id=%s' % self.customer_id)
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        self.assertIn('queryset', json.loads(response.read()).keys())
+        self.assertIn('queryset', json.loads(response.content).keys())
 
 
 class TestCatalogSubCase(TestCase):
@@ -163,11 +165,11 @@ class TestCustomerEventsViaRabbitMQCase(TestCase):
 
 
 
-class SubscriptionDeleted(Exception):
+class SubscriptionFailedDelete(Exception):
     pass
 
 
-import pytest, unittest.mock
+import pytest, unittest.mock, requests.exceptions
 from . import models
 
 
@@ -175,41 +177,74 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
 
     def setUp(self) -> None:
         from . import views
-        self.customer_id = models.APICustomer.objects.create(username='Username', email='someemail@gmail.com')
-        self.subscription_id = models.Subscription.objects.create(
-        owner_id=self.customer_id, amount=1000, currency='eur')
+        self.customer_data = {'username': "SomeUser", 'email': 'someeamil@gmail.com'}
+        self.customer = models.APICustomer.objects.using(settings.MAIN_DATABASE).create(**self.customer_data)
+        self.subscription = models.Subscription.objects.using(settings.MAIN_DATABASE).create(
+        owner_id=self.customer.id, amount=1000, currency='eur')
+
+        self.subscription.purchasers.using(settings.MAIN_DATABASE).create(**self.customer_data)
         self.controller = views.DeleteSubscription()
 
-    def mocked_verification_code(self):
-        return self.controller.generate_verification_code()
 
-    def mocked_email_confirmation_request(self):
+    def mocked_email_confirmation_session(self, fake=False):
 
-        import django.http, django.contrib.sessions.models
-        mocked_token = self.mocked_verification_code()
-        session = django.contrib.sessions.models.Session.objects.create()
-        session['verification_code'] = mocked_token
+        import django.http, django.contrib.sessions.backends.db, datetime # replace the session date
+        session = django.contrib.sessions.backends.db.SessionStore()
+        session['subscription_id'] = self.subscription.id if not fake else 'invalid-subscription-id'
+        session.set_expiry(value=30)
+        session.create()
+        return session.session_key
 
-        mocked_request = django.http.HttpRequest(
-        ).GET.update({'verification_code': self.mocked_verification_code(),
-        'subscription_id': self.subscription_id, 'session_id': session.key})
-        return mocked_request
 
-    @pytest.mark.asyncio
-    async def test_deletion_email_verification_endpoint(self):
+    def test_email_verification_endpoint(self):
+
         from .confirmation import confirmation
 
-        request = self.mocked_email_confirmation_request()
-        validated = confirmation.ConfirmEmailVerificationController.post(request=request)
-        self.assertEquals(validated.status_code, 200)
+        http_session_key = self.mocked_email_confirmation_session(fake=False)
+        response = test_client.post(path='http://localhost:8000/confirm/delete/'
+        'subscription/?session_id=%s' % http_session_key,
+        partimeout=10, headers={'X-CSRF-Token':
+        django.middleware.csrf._get_new_csrf_token(), 'Content-Type': 'application/json'})
+
+        self.assertEquals(response.status_code, 200)
+        mocked_request.assert_called_once()
+
+        with unittest.mock.patch('main.signals.process_subscription_delete') as mocked_event:
+                mocked_event.side_effect = SubscriptionDeleted
+
+                signals.process_subscription_delete(subscription_id=self.subscription.id)
+                self.assertLess(len(models.Subscription.objects.all()), 1)
+                self.assertRaises(SubscriptionDeleted)
+
+                mocked_emails.assert_called_with(
+                emails=self.subscription.purchasers.values_list('email', flat=True))
+                mocked_emails.assert_called()
+
+
+    def test_fail_delete_subscription(self):
+        from .confirmation import confirmation
+
+        with unittest.mock.patch('main.confirmation.confirmation.django.http.HttpResponse') as mocked_request:
+            mocked_request.side_effect = requests.exceptions.RequestException
+            with self.assertRaises(requests.exceptions.RequestException):
+
+                http_session_key = self.mocked_email_confirmation_session(fake=False)
+                response = test_client.post(path='http://localhost:8000/confirm/delete/subscription/',
+                params={'session_id': http_session_key}, timeout=10, headers={
+
+                'X-CSRF-Token':django.middleware.csrf._get_new_csrf_token(),
+                'Content-Type': 'application/json'})
+                self.assertIn(response.status_code, (400, 404))
+                mocked_request.assert_called_once()
 
     def test_process_delete_subscription(self):
-        with unittest.mock.patch('main.signals.process_subscription_delete') as mocked_event:
-            mocked_event.side_effect = SubscriptionDeleted
-            signals.process_subscription_delete(subscription_id=self.subscription_id)
-            self.assertLess(len(models.Subscription.objects.all()), 1)
-            self.assertRaises(SubscriptionDeleted)
 
+        with unittest.mock.patch('main.signals.process_subscription_delete') as mocked_event:
+            mocked_event.side_effect = SubscriptionFailedDelete
+            with self.assertRaises(SubscriptionFailedDelete):
+
+                signals.process_subscription_delete(subscription_id=self.subscription.id)
+                self.assertLess(len(models.Subscription.objects.all()), 1)
 
 
 
