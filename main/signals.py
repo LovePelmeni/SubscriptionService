@@ -72,8 +72,3 @@ def process_subscription_delete(subscription_id: typing.Union[str, int], **kwarg
     except(django.core.exceptions.ObjectDoesNotExist, AttributeError, TypeError, KeyError) as exception:
         logger.error('Could not process deletion for ' 
         'Subscription with ID: %s. Exception: %s' % subscription_id, exception)
-
-
-
-
-

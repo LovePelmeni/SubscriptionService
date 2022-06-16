@@ -169,6 +169,10 @@ class SubscriptionFailedDelete(Exception):
     pass
 
 
+class VerificationFailed(Exception):
+    pass
+
+
 import pytest, unittest.mock, requests.exceptions
 from . import models
 
@@ -207,18 +211,19 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
         django.middleware.csrf._get_new_csrf_token(), 'Content-Type': 'application/json'})
 
         self.assertEquals(response.status_code, 200)
-        mocked_request.assert_called_once()
 
-        with unittest.mock.patch('main.signals.process_subscription_delete') as mocked_event:
-                mocked_event.side_effect = SubscriptionDeleted
 
-                signals.process_subscription_delete(subscription_id=self.subscription.id)
-                self.assertLess(len(models.Subscription.objects.all()), 1)
-                self.assertRaises(SubscriptionDeleted)
+    def test_fail_email_verification_endpoint(self):
 
-                mocked_emails.assert_called_with(
-                emails=self.subscription.purchasers.values_list('email', flat=True))
-                mocked_emails.assert_called()
+        with unittest.mock.patch('main.confirmation.confirmation.'
+        'ConfirmEmailVerificationController.post') as mocked_controller:
+
+            mocked_controller.side_effect = VerificationFailed
+            with self.assertRaises(expected_exception=VerificationFailed):
+                response = test_client.post('http://localhost:8000/confirm/delete/subscription/',
+                headers={'X-CSRF-Token': django.middleware.csrf._get_new_csrf_token()},
+                content_type='application/json')
+                self.assertNotEquals(response.status_code, 201)
 
 
     def test_fail_delete_subscription(self):
@@ -232,8 +237,9 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
                 response = test_client.post(path='http://localhost:8000/confirm/delete/subscription/',
                 params={'session_id': http_session_key}, timeout=10, headers={
 
-                'X-CSRF-Token':django.middleware.csrf._get_new_csrf_token(),
+                'X-CSRF-Token': django.middleware.csrf._get_new_csrf_token(),
                 'Content-Type': 'application/json'})
+
                 self.assertIn(response.status_code, (400, 404))
                 mocked_request.assert_called_once()
 

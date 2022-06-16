@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class ConfirmEmailVerificationController(views.APIView):
 
     def process_subscription_delete(self, subscription_id: typing.Union[str, int]):
-        subscription_delete.send(subscription_id=subscription_id)
+        signals.subscription_delete.send(sender=self, subscription_id=subscription_id)
 
     @django.utils.decorators.method_decorator(decorator=csrf.requires_csrf_token)
     def post(self, request):

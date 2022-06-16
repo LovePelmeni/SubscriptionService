@@ -17,4 +17,3 @@ RUN chmod +x ./subscription-entrypoint.sh
 ENTRYPOINT ["sh", "./subscription-entrypoint.sh"]
 
 
-

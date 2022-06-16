@@ -49,7 +49,7 @@ services:
 
     volumes:
       - ./mongo_db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
-      - ./mongo_db/data:/data/db
+      - ./mongo_db/metadata/data:/data/db
     command: mongod --port 27018
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongo 127.0.0.1:27018/mongo_db --quiet

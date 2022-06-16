@@ -114,7 +114,7 @@ class ObtainCatalogSubscriptionAPIView(viewsets.ModelViewSet):
         except() as exception:
             raise exception
 
-class CustomSubscriptionAPIView(generics.GenericAPIView):
+class CustomSubscriptionAPIView(viewsets.ModelViewSet):
 
     validate_form_class = api_serializers.SubFormSerializer
     queryset = models.Subscription.objects.all()
@@ -125,14 +125,15 @@ class CustomSubscriptionAPIView(generics.GenericAPIView):
         if isinstance(exc, django.core.exceptions.ValidationError):
             return django.http.HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
+        if exc.__class__.__name__ in (django.core.exceptions.ObjectDoesNotExist,
+        AttributeError, KeyError):
+            return django.http.HttpResponseNotFound()
         return django.http.HttpResponse(status=status.HTTP_501_NOT_IMPLEMENTED)
 
-    def get_permissions(self):
-        return (rest_perms.AllowAny,)
 
     @django.utils.decorators.method_decorator(decorator=csrf.requires_csrf_token)
     @transaction.atomic
-    def post(self, request) -> django.http.HttpResponse:
+    def create(self, request, **kwargs) -> django.http.HttpResponse:
         try:
             subscription = self.validate_form_class(request.data)
             if subscription.is_valid():
@@ -144,9 +145,36 @@ class CustomSubscriptionAPIView(generics.GenericAPIView):
         except() as exception:
             raise exception
 
-    @django.utils.decorators.method_decorator(decorator=csrf.requires_csrf_token)
-    def put(self, request):
-        return django.http.HttpResponse(status=200)
+    @decorators.action(methods=['get'], detail=True)
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            customer = models.APICustomer.objects.get(id=request.query_params.get('customer_id'))
+            subscription = customer.subscriptions.filter(
+            id=request.query_params.get('subscription_id')).first()
+
+            return django.http.HttpResponse(status=status.HTTP_200_OK,
+            content=json.dumps({'subscription': subscription},
+            cls=django.core.serializers.json.DjangoJSONEncoder))
+
+        except(django.core.exceptions.ObjectDoesNotExist, AttributeError) as exception:
+            raise exception
+
+    @decorators.action(methods=['get'], detail=False)
+    def list(self, request, *args, **kwargs):
+
+        from django.db import models as db_models
+        try:
+            customer = models.APICustomer.objects.get(id=request.query_params.get('customer_id'))
+            queryset = list(customer.subscriptions.annotate(
+            purchasers_count=db_models.Count(db_models.F('subscriptions'))).values())
+            return django.http.HttpResponse(status=status.HTTP_200_OK,
+            content=json.dumps({"queryset": queryset},
+            cls=django.core.serializers.json.DjangoJSONEncoder))
+
+        except(django.core.exceptions.ObjectDoesNotExist, AttributeError, KeyError,
+        django.db.utils.IntegrityError) as exception:
+            raise exception
+
 
 class CheckSubPermissionStatus(views.APIView):
 
@@ -315,5 +343,7 @@ class DeleteSubscription(views.APIView):
         AttributeError, TypeError, KeyError) as exception:
             logger.error('Exception: %s at DeleteSubscription Controller.' % exception)
             raise NotImplementedError
+
+
 
 

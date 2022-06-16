@@ -15,7 +15,13 @@ urlpatterns = [
 
     path('get/sub/list/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'list'}), name='sub-list'),
     path('get/sub/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'retrieve'}), name='sub-retrieve'),
-    path('custom/sub/', views.CustomSubscriptionAPIView.as_view(), name='create-custom-sub'),
+
+    #custom subscriptions urls:
+
+    path('get/custom/subs/', views.CustomSubscriptionAPIView.as_view({'get': 'list'}), name='custom-subs'),
+    path('get/custom/sub/', views.CustomSubscriptionAPIView.as_view({'get': 'retrieve'}), name='custom-sub'),
+    path('custom/sub/', views.CustomSubscriptionAPIView.as_view({'post': 'create'}), name='create-custom-sub'),
+    path('custom/sub/delete/', views.DeleteSubscription.as_view(), name='delete-custom-sub'),
 
     path('check/sub/permission/', views.CheckSubPermissionStatus.as_view(), name='check-sub-permission'),
 

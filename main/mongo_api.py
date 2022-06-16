@@ -3,7 +3,6 @@ import datetime
 import django.conf, logging
 from . import exceptions
 
-
 # from . import models
 try:
     client = pymongo.MongoClient(getattr(django.conf.settings, 'MONGO_DATABASE_URL'), authMechanism='SCRAM-SHA-1')

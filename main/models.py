@@ -67,8 +67,8 @@ class Subscription(models.Model):
     def __str__(self):
         return self.subscription_name
 
-
-
     class Meta:
         verbose_name = 'Subscription'
+
+
 
