@@ -20,11 +20,9 @@ services:
     container_name: postgresql_sub_container
     image: postgres:13.3
     environment:
-
       POSTGRES_DB: "sub_db"
       POSTGRES_USER: "postgres_sub_user"
       POSTGRES_PASSWORD: "Kirill"
-
     ports:
       - 5437:5437
     command:
@@ -51,7 +49,7 @@ services:
 
     volumes:
       - ./mongo_db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
-      - ./mongo_db/data:/data/db
+      - ./mongo_db/metadata/data:/data/db
     command: mongod --port 27018
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongo 127.0.0.1:27018/mongo_db --quiet

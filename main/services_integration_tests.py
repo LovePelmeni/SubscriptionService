@@ -1,8 +1,10 @@
 from django.test import TestCase
 from django.test.runner import DiscoverRunner
+
 from django.conf import settings
 from django.db import connections
 import socket
+
 from django.conf import settings
 import requests.exceptions
 import pika.exceptions

@@ -37,4 +37,24 @@ class SubCatalogSerializer(serializers.ModelSerializer):
         model = models.Subscription
         exclude = ('created_at', 'owner_id')
 
+from django.utils.translation import gettext_lazy as _
+
+choices = [
+    ('usd', 'usd'),
+    ('eu', 'eu'),
+    ('rub', 'rub')
+]
+
+class ActivateSubSerializer(serializers.Serializer):
+
+    subscription_name = serializers.CharField(label=_('Required Field'))
+    subscription_id = serializers.IntegerField(label=_('Required Field'))
+
+    purchaser_id = serializers.IntegerField(label=_('Required Field'))
+    owner_id = serializers.IntegerField(label=_('Required Field'))
+
+    amount = serializers.IntegerField(label=_('Required Field'))
+    currency = serializers.ChoiceField(choices=choices, label=_("Required Field"))
+
+
 

@@ -1,16 +1,27 @@
 from . import views, healthcheck as health
 from django.urls import path
+
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import views as yasg_views, openapi
+
 from rest_framework import permissions
 from . import customer_api
+
+
 app_name = 'main'
+
 
 urlpatterns = [
 
     path('get/sub/list/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'list'}), name='sub-list'),
     path('get/sub/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'retrieve'}), name='sub-retrieve'),
-    path('custom/sub/', views.CustomSubscriptionAPIView.as_view(), name='create-custom-sub'),
+
+    #custom subscriptions urls:
+
+    path('get/custom/subs/', views.CustomSubscriptionAPIView.as_view({'get': 'list'}), name='custom-subs'),
+    path('get/custom/sub/', views.CustomSubscriptionAPIView.as_view({'get': 'retrieve'}), name='custom-sub'),
+    path('custom/sub/', views.CustomSubscriptionAPIView.as_view({'post': 'create'}), name='create-custom-sub'),
+    path('custom/sub/delete/', views.DeleteSubscription.as_view(), name='delete-custom-sub'),
 
     path('check/sub/permission/', views.CheckSubPermissionStatus.as_view(), name='check-sub-permission'),
 
@@ -29,7 +40,7 @@ urlpatterns = [
     path('healthcheck/celery/', health.CeleryHealthCheckAPIView.as_view(), name='celery-healthcheck'),
 
     path('create/customer/', customer_api.create_customer, name='create-customer'),
-    path('delete/customer/', customer_api.delete_customer, name='delete-customer')
+    path('delete/customer/', customer_api.delete_customer, name='delete-customer'),
 
 ]
 

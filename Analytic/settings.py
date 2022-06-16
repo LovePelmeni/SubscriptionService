@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -99,7 +99,7 @@ DEFAULT_BEAT_HOURS = 0
 if not DEBUG:
 
     SECRET_KEY = os.environ.get('SECRET_KEY')
-
+    MAIN_DATABASE = 'default'
 
     RABBITMQ_BROKER_USER = os.environ.get('RABBITMQ_BROKER_USER', None)
     RABBITMQ_BROKER_PASSWORD = os.environ.get('RABBITMQ_BROKER_PASSWORD', None)
@@ -107,6 +107,17 @@ if not DEBUG:
     RABBITMQ_BROKER_HOST = os.environ.get('RABBITMQ_BROKER_HOST', None)
     RABBITMQ_BROKER_PORT = os.environ.get('RABBITMQ_BROKER_PORT', None)
 
+
+    RABBITMQ_USER = os.environ.get('RABBITMQ_BROKER_USER', None)
+    RABBITMQ_PASSWORD = os.environ.get('RABBITMQ_BROKER_PASSWORD', None)
+    RABBITMQ_VHOST = os.environ.get('RABBITMQ_BROKER_VHOST', None)
+    RABBITMQ_HOST = os.environ.get('RABBITMQ_BROKER_HOST', None)
+    RABBITMQ_PORT = os.environ.get('RABBITMQ_BROKER_PORT', None)
+
+
+    RABBITMQ_NODE2_HOST = os.environ.get('RABBITMQ_BROKER_HOST', None)
+    RABBITMQ_NODE2_PORT = os.environ.get('RABBITMQ_BROKER_PORT', None)
+    SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', None)
 
     BROKER_URL = 'amqp://%s:%s@%s:%s/%s' % (RABBITMQ_BROKER_USER,
     RABBITMQ_BROKER_PASSWORD, RABBITMQ_BROKER_HOST, RABBITMQ_BROKER_PORT, RABBITMQ_BROKER_VHOST)
@@ -134,7 +145,7 @@ if not DEBUG:
             'NAME': POSTGRES_DATABASE,
             "USER": POSTGRES_USER,
             "PASSWORD": POSTGRES_PASSWORD,
-            "HOST": POSTGRES_HOST,  # when deploying need to change host to the name of the service..
+            "HOST": POSTGRES_HOST,  # when deploying need to change host to the name of the service...
             "PORT": POSTGRES_PORT
         }
     }
@@ -178,7 +189,7 @@ if not DEBUG:
     }
 
 else:
-
+    MAIN_DATABASE = 'default'
     SECRET_KEY = 'django-insecure-5r(afa9tiucqz!i8g(u*1$8ihk4*f7#dmr64uk0417)sm^f5hz'
 
     RABBITMQ_USER = 'rabbitmq_user'
@@ -192,6 +203,8 @@ else:
     RABBITMQ_BROKER_VHOST = 'rabbitmq_broker_vhost'
     RABBITMQ_BROKER_HOST = 'localhost'
     RABBITMQ_BROKER_PORT = 5675
+
+    SUPPORT_EMAIL = 'support@gmail.com'
 
     BROKER_URL = 'amqp://%s:%s@%s:%s/%s' % (RABBITMQ_BROKER_USER,
     RABBITMQ_BROKER_PASSWORD, RABBITMQ_BROKER_HOST, RABBITMQ_BROKER_PORT, RABBITMQ_BROKER_VHOST)
@@ -269,7 +282,7 @@ LOGGING = {
     },
 }
 
-
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 from urllib.parse import quote_plus
 

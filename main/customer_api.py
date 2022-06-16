@@ -23,6 +23,7 @@ def create_customer(request):
     transaction.rollback()
     return django.http.HttpResponseServerError()
 
+
 @decorators.api_view(['DELETE'])
 @transaction.atomic
 def delete_customer(request):
@@ -35,6 +36,4 @@ def delete_customer(request):
         transaction.rollback()
 
     return django.http.HttpResponseServerError()
-
-
 
