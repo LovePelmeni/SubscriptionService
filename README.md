@@ -1,4 +1,4 @@
-    
+
 # Subscription Service
 
 Docs Link: [API Documentation]("http://localhost:8077/swagger/")
@@ -106,4 +106,3 @@ Tip: `On Exception Highly Recommend rebuilding the application.`
 
 
 ### Go check UI-Documentation by clicking at `API Docs` button at the top.
-
