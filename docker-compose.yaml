@@ -9,12 +9,19 @@ services:
       - "8077:82"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    links:
-      - sub_application
     depends_on:
       - sub_application
     networks:
       - sub_app_network
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        failure_action: rollback
+        delay: 10s
+      placement:
+        constraints:
+          - 'labels.TAG=subscription_service'
 
   postgresql_sub_database_server:
     container_name: postgresql_sub_container
@@ -32,9 +39,19 @@ services:
       retries: 5
       interval: 10s
       timeout: 5s
-
     networks:
       - sub_app_network
+    deploy:
+      replicas: 1
+      update_config:
+        failure_action: rollback
+        max_failure_ratio: 10
+        parallelism: 1
+        delay: 10s
+      placement:
+        constraints:
+          - 'labels.TAG=subscription_service'
+
 
   mongo_sub_database:
     image: mongo:latest
@@ -57,9 +74,18 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
-
     networks:
       - sub_app_network
+    deploy:
+      replicas: 1
+      update_config:
+        failure_action: rollback
+        delay: 10s
+        max_failure_ratio: 10
+      placement:
+        constraints:
+          - 'labels.TAG=subscription_service'
+
 
   redis_storage:
     container_name: redis_celery
@@ -76,6 +102,17 @@ services:
 
     networks:
       - sub_app_network
+    deploy:
+      replicas: 1
+      update_config:
+        failure_action: rollback
+        delay: 10s
+        parallelism: 1
+      placement:
+        constraints:
+          - 'labels.TAG=subscription_service'
+
+
 
   sub_application:
     build: .
@@ -98,6 +135,16 @@ services:
       - celeryrabbitmq
     networks:
       - sub_app_network
+    deploy:
+      update_config:
+        parallelism: 1
+        delay: 10s
+        max_failure_ratio: 10
+        failure_action: rollback
+      placement:
+        constraints:
+          - 'labels.TAG=subscription_service'
+
 
   celeryrabbitmq:
       image: rabbitmq:3.9-management
@@ -120,13 +167,23 @@ services:
         interval: 20s
 
       networks:
-        sub_app_network:
-          aliases:
-            - celeryrabbitmq
+        - sub_app_network
+      deploy:
+        replicas: 1
+        update_config:
+          parallelism: 1
+          delay: 10s
+          failure_action: rollback
+        placement:
+          constraints:
+            - 'labels.TAG=subscription_service'
+
 
 networks:
   sub_app_network:
     external: true
     name: global_project_network
+
+
 
 
