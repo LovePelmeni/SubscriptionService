@@ -1,8 +1,9 @@
 
 # Subscription Service
 
-Docs Link: [API Documentation]("http://localhost:8077/swagger/")
-Project Swarm support Documentation: SWARM.md file in the main directory 
+#### API Docs Link: [API Documentation]("http://localhost:8077/swagger/")
+
+#### Project Swarm support Documentation: SWARM.md file in the main directory 
 
 `Subscription Service`
 `Date: 24.05.22`
