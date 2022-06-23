@@ -1,0 +1,186 @@
+version: "3.9"
+services:
+
+  sub_nginx_server:
+    restart: on-failure
+    build: ./nginx/.
+    container_name: sub_nginx_container
+    ports:
+      - "8077:82"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - sub_application
+    networks:
+      - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
+
+  postgresql_sub_database_server:
+    container_name: postgresql_sub_container
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "sub_db"
+      POSTGRES_USER: "postgres_sub_user"
+      POSTGRES_PASSWORD: "Kirill"
+    ports:
+      - 5437:5437
+    command:
+      - -p 5437
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "sub_db"]
+      retries: 5
+      interval: 10s
+      timeout: 5s
+    networks:
+      - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
+
+  mongo_sub_database:
+    image: mongo:latest
+    container_name: mongo_subscription_database
+    environment:
+      - MONGO_INITDB_DATABASE=mongo_sub_db
+      - MONGO_INITDB_ROOT_USERNAME=mongo_user
+      - MONGO_INITDB_ROOT_PASSWORD=mongo_password
+    ports:
+      - 27016:27016
+      - 27018:27018
+    volumes:
+      - ./mongo_db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
+      - ./mongo_db/metadata/data:/data/db
+    command: mongod --port 27018
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo 127.0.0.1:27018/mongo_db --quiet
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+    restart: unless-stopped
+    networks:
+      - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
+
+  redis_storage:
+    container_name: redis_celery
+    image: redis:latest
+    ports:
+      - 6380:6380
+    command:
+      - --port 6380
+    healthcheck:
+      test: ["CMD", "redis://localhost:6380/", "PING"]
+      retries: 5
+      interval: 15s
+      timeout: 10s
+    networks:
+      - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
+
+  sub_application:
+    image: crazycoderrr/subscription_app
+    container_name: sub_application
+    env_file:
+      - ./project/sub_app.env
+    ports:
+      - 8076:8076
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8076/healthcheck/", "&&", "curl", "-f",
+      "curl", "-f", "http://localhost:8076/healthcheck/celery/"]
+      retries: 5
+      interval: 15s
+      timeout: 10s
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
+
+    depends_on:
+      - redis_storage
+      - postgresql_sub_database_server
+      - mongo_sub_database
+      - celeryrabbitmq
+    networks:
+      - sub_app_network
+
+  celeryrabbitmq:
+      container_name: celery_rabbitmq_broker
+      image: rabbitmq:3.9-management
+      volumes:
+        - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+        - ./rabbitmq/definition.json:/etc/rabbitmq/definitions.json
+        - ./rabbitmq/log:/var/log/rabbitmq
+
+      environment:
+        - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
+        - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log [{console,[{level,debug}]}]
+      ports:
+        - 5675:5672
+        - 15673:15673
+
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5675/api/health/checks/node"]
+        retries: 5
+        timeout: 10s
+        interval: 20s
+
+      networks:
+        - sub_app_network
+
+      deploy:
+        placement:
+          constraints:
+            - 'node.labels.TAG==subscription_service'
+        mode: replicated
+        update_config:
+          parallelism: 1
+          delay: 10s
+          failure_action: rollback
+        replicas: 1
+
+networks:
+  sub_app_network:
+    external: true
+    name: subscription_project_network
+
