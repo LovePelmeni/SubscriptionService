@@ -1,3 +1,5 @@
+SUBSCRIPTION APP WITH DOCKER SWARM PROJECT GUIDE.
+
 #### habr: [Docker-Swarm Guide]("https://habr.com/")
 
 #### tutorial: [Docker-Swarm-Tutorial]("https://habr.com/")
