@@ -2,19 +2,26 @@ version: "3.9"
 services:
 
   sub_nginx_server:
-    restart: on-failure
     image: nginx:latest
     container_name: sub_nginx_container
     ports:
       - "8077:82"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    links:
-      - sub_application
     depends_on:
       - sub_application
     networks:
       - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
 
   postgresql_sub_database_server:
     container_name: postgresql_sub_container
@@ -32,9 +39,18 @@ services:
       retries: 5
       interval: 10s
       timeout: 5s
-
     networks:
       - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
 
   mongo_sub_database:
     image: mongo:latest
@@ -46,7 +62,6 @@ services:
     ports:
       - 27016:27016
       - 27018:27018
-
     volumes:
       - ./mongo_db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
       - ./mongo_db/metadata/data:/data/db
@@ -56,10 +71,19 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-    restart: unless-stopped
 
     networks:
       - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
 
   redis_storage:
     container_name: redis_celery
@@ -73,9 +97,18 @@ services:
       retries: 5
       interval: 15s
       timeout: 10s
-
     networks:
       - sub_app_network
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
 
   sub_application:
     image: crazycoderrr/subscription_app
@@ -90,6 +123,16 @@ services:
       retries: 5
       interval: 15s
       timeout: 10s
+    deploy:
+      placement:
+        constraints:
+          - 'node.labels.TAG==subscription_service'
+      mode: replicated
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      replicas: 1
 
     depends_on:
       - redis_storage
@@ -100,6 +143,7 @@ services:
       - sub_app_network
 
   celeryrabbitmq:
+      container_name: celery_rabbitmq_broker
       image: rabbitmq:3.9-management
       volumes:
         - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
@@ -122,9 +166,19 @@ services:
       networks:
         - sub_app_network
 
+      deploy:
+        placement:
+          constraints:
+            - 'node.labels.TAG==subscription_service'
+        mode: replicated
+        update_config:
+          parallelism: 1
+          delay: 10s
+          failure_action: rollback
+        replicas: 1
+
 networks:
   sub_app_network:
     external: true
-    name: global_project_network
-
+    name: subscription_project_network
 
