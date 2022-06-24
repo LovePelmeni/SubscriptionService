@@ -2,8 +2,7 @@ version: "3.9"
 services:
 
   sub_nginx_server:
-    restart: on-failure
-    build: ./nginx/.
+    image: nginx:latest
     container_name: sub_nginx_container
     ports:
       - "8077:82"
@@ -73,7 +72,6 @@ services:
       timeout: 10s
       retries: 5
 
-    restart: unless-stopped
     networks:
       - sub_app_network
     deploy:

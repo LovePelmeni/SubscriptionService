@@ -7,3 +7,6 @@ class ExpiredSubscription(BaseException):
 
 class MongoDatabaseIsNotRunning(BaseException):
     pass
+
+class InvalidSubscriptionPayload(BaseException):
+    pass

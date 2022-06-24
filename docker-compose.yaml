@@ -3,7 +3,7 @@ services:
 
   sub_nginx_server:
     restart: on-failure
-    build: ./nginx/.
+    image: nginx:latest
     container_name: sub_nginx_container
     ports:
       - "8077:82"
@@ -78,7 +78,7 @@ services:
       - sub_app_network
 
   sub_application:
-    build: .
+    image: crazycoderrr/subscription_app
     container_name: sub_application
     env_file:
       - ./project/sub_app.env
@@ -120,9 +120,7 @@ services:
         interval: 20s
 
       networks:
-        sub_app_network:
-          aliases:
-            - celeryrabbitmq
+        - sub_app_network
 
 networks:
   sub_app_network:

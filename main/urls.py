@@ -6,7 +6,7 @@ from drf_yasg import views as yasg_views, openapi
 
 from rest_framework import permissions
 from . import customer_api
-
+import django.http
 
 app_name = 'main'
 
@@ -36,7 +36,7 @@ urlpatterns = [
     path('get/purchased/sub/', views.ObtainAppliedSubscriptionAPIView.as_view({'get': 'retrieve'})),
 
     #healthcheck urls:
-    path('healthcheck/application/', health.application_service_healthcheck, name='service-healthcheck'),
+    path('healthcheck/application/', lambda request: django.http.HttpResponse(status=200), name='service-healthcheck'),
     path('healthcheck/celery/', health.CeleryHealthCheckAPIView.as_view(), name='celery-healthcheck'),
 
     path('create/customer/', customer_api.create_customer, name='create-customer'),
