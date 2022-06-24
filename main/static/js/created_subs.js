@@ -1,5 +1,4 @@
-import * as notify_api from
-
+import * as notify_api from './notifications.js'
 
 
 function EmailConfirmationDeleteSubscription(sub_id){

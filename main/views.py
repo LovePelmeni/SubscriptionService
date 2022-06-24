@@ -16,7 +16,7 @@ from django.conf import settings
 from rest_framework import \
 viewsets, status, views, decorators, response, serializers, generics
 
-from . import permissions, serializers as api_serializers
+from . import permissions, serializers as api_serializers, forms
 from django.db import models as lib_models
 
 import django.core.serializers.json, datetime
@@ -131,6 +131,12 @@ class CustomSubscriptionAPIView(viewsets.ModelViewSet):
         return django.http.HttpResponse(status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
+    @decorators.action(methods=['get'], detail=False)
+    def subscription_form(self, request):
+        return django.template.response.TemplateResponse(request,
+        'main/create_subscription.html', context={'form': forms.SubscriptionForm()})
+
+
     @django.utils.decorators.method_decorator(decorator=csrf.requires_csrf_token)
     @transaction.atomic
     def create(self, request, **kwargs) -> django.http.HttpResponse:
@@ -145,6 +151,7 @@ class CustomSubscriptionAPIView(viewsets.ModelViewSet):
         except() as exception:
             raise exception
 
+
     @decorators.action(methods=['get'], detail=True)
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -158,6 +165,7 @@ class CustomSubscriptionAPIView(viewsets.ModelViewSet):
 
         except(django.core.exceptions.ObjectDoesNotExist, AttributeError) as exception:
             raise exception
+
 
     @decorators.action(methods=['get'], detail=False)
     def list(self, request, *args, **kwargs):
@@ -174,6 +182,7 @@ class CustomSubscriptionAPIView(viewsets.ModelViewSet):
         except(django.core.exceptions.ObjectDoesNotExist, AttributeError, KeyError,
         django.db.utils.IntegrityError) as exception:
             raise exception
+
 
 
 class CheckSubPermissionStatus(views.APIView):
@@ -235,9 +244,10 @@ class ApplySubscriptionAPIView(viewsets.ViewSet):
         return django.http.HttpResponseServerError()
 
     @decorators.action(methods=['get'], detail='Retrieves form for Activating Subscription.')
-    def retrieve(self, request):
+    def activation_form(self, request):
         from . import forms
-        return django.http.JsonResponse({'form': forms.ActivateSubForm()}, status=200)
+        return django.template.TemplateResponse(request, 'main/activate_subscription.html',
+        context={'form': forms.ActivateSubForm()})
 
 
     @decorators.action(methods=['delete'], detail='Disactivates Subscription.')

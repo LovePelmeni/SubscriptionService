@@ -8,13 +8,11 @@ class ExpirePeriodField(forms.DurationField):
     def __init__(self, **kwargs):
         super(ExpirePeriodField, self).__init__(**kwargs)
 
-
     def prepare_expire_string(self, value: datetime.timedelta):
         string = '{:02d}:{:02d}:{:02d}'.format(value.seconds // 3600, value.seconds // 60, value.seconds)
         if value.days is not None:
             string = '%s ' % (value.days) + string
         return string
-
 
     def prepare_value(self, value):
         if not isinstance(value, datetime.timedelta):

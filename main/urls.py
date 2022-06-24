@@ -13,20 +13,24 @@ app_name = 'main'
 
 urlpatterns = [
 
-    path('get/sub/list/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'list'}), name='sub-list'),
-    path('get/sub/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'retrieve'}), name='sub-retrieve'),
+    # default getter subscription urls:
+
+    path('get/catalog/sub/list/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'list'}), name='sub-list'),
+    path('get/catalog/sub/', views.ObtainCatalogSubscriptionAPIView.as_view({'get': 'retrieve'}), name='sub-retrieve'),
+
 
     #custom subscriptions urls:
 
     path('get/custom/subs/', views.CustomSubscriptionAPIView.as_view({'get': 'list'}), name='custom-subs'),
     path('get/custom/sub/', views.CustomSubscriptionAPIView.as_view({'get': 'retrieve'}), name='custom-sub'),
+
     path('custom/sub/', views.CustomSubscriptionAPIView.as_view({'post': 'create'}), name='create-custom-sub'),
     path('custom/sub/delete/', views.DeleteSubscription.as_view(), name='delete-custom-sub'),
-
-    path('check/sub/permission/', views.CheckSubPermissionStatus.as_view(), name='check-sub-permission'),
+    path('custom/sub/page/', views.CustomSubscriptionAPIView.as_view({'get': 'subscription_form'}), name='custom-sub-page'),
 
     #activate urls:
-    path('get/activate/sub/form/', views.ApplySubscriptionAPIView.as_view({'get': 'retrieve'}), name='get-activate-sub-form'),
+
+    path('get/activate/page', views.ApplySubscriptionAPIView.as_view({'get': 'activation_form'}), name='get-activate-sub-form'),
     path('activate/sub/', views.ApplySubscriptionAPIView.as_view({'post': 'create'}), name='activate-subscription'),
     path('disactivate/sub/', views.ApplySubscriptionAPIView.as_view({'delete': 'destroy'}),
     name='disactivate-subscription'),
@@ -41,6 +45,11 @@ urlpatterns = [
 
     path('create/customer/', customer_api.create_customer, name='create-customer'),
     path('delete/customer/', customer_api.delete_customer, name='delete-customer'),
+
+    #checkers urls:
+
+    path('check/sub/permission/', views.CheckSubPermissionStatus.as_view(), name='check-sub-permission'),
+
 
 ]
 

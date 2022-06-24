@@ -28,7 +28,8 @@ class TestCeleryTaskExecutionCase(TestCase):
         self.idempotency_key = 'some-test-idempotency-key'
 
         self.purchaser_id = APICustomer.objects.create(username='Customer').id
-        self.sub_id = Subscription.objects.create(amount=100, subscription_name='TestSubscription', owner_id=self.purchaser_id).id
+        self.sub_id = Subscription.objects.create(amount=100,
+        subscription_name='TestSubscription', owner_id=self.purchaser_id).id
         self.task_credentials = {
             'idempotency_key': self.idempotency_key,
             'purchaser_id': self.purchaser_id,
@@ -168,10 +169,8 @@ class TestCustomerEventsViaRabbitMQCase(TestCase):
 class SubscriptionFailedDelete(Exception):
     pass
 
-
 class VerificationFailed(Exception):
     pass
-
 
 import pytest, unittest.mock, requests.exceptions
 from . import models
@@ -203,7 +202,6 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
     def test_email_verification_endpoint(self):
 
         from .confirmation import confirmation
-
         http_session_key = self.mocked_email_confirmation_session(fake=False)
         response = test_client.post(path='http://localhost:8000/confirm/delete/'
         'subscription/?session_id=%s' % http_session_key,
@@ -214,16 +212,10 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
 
 
     def test_fail_email_verification_endpoint(self):
-
-        with unittest.mock.patch('main.confirmation.confirmation.'
-        'ConfirmEmailVerificationController.post') as mocked_controller:
-
-            mocked_controller.side_effect = VerificationFailed
-            with self.assertRaises(expected_exception=VerificationFailed):
-                response = test_client.post('http://localhost:8000/confirm/delete/subscription/',
-                headers={'X-CSRF-Token': django.middleware.csrf._get_new_csrf_token()},
-                content_type='application/json')
-                self.assertNotEquals(response.status_code, 201)
+        response = test_client.post('http://localhost:8000/confirm/delete/subscription/',
+        headers={'X-CSRF-Token': django.middleware.csrf._get_new_csrf_token()},
+        content_type='application/json')
+        self.assertNotEquals(response.status_code, 201)
 
 
     def test_fail_delete_subscription(self):
@@ -333,3 +325,5 @@ class TestMongoDBControllersCase(unittest.TestCase):
         """Removes all insertions made during the test."""
         from . import mongo_api
         mongo_api.delete_all_subscriptions(self.purchaser.id)
+
+
