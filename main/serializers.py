@@ -1,4 +1,3 @@
-import typing
 from django import forms
 from rest_framework import serializers
 from . import models
@@ -47,14 +46,13 @@ choices = [
 
 class ActivateSubSerializer(serializers.Serializer):
 
-    subscription_name = serializers.CharField(label=_('Required Field'))
-    subscription_id = serializers.IntegerField(label=_('Required Field'))
+    subscription_name = serializers.CharField(label=_('Required Field'), required=True)
+    subscription_id = serializers.IntegerField(label=_('Required Field'), required=True)
 
-    purchaser_id = serializers.IntegerField(label=_('Required Field'))
-    owner_id = serializers.IntegerField(label=_('Required Field'))
+    purchaser_id = serializers.IntegerField(label=_('Required Field'), required=True)
+    owner_id = serializers.IntegerField(label=_('Required Field'), required=True)
 
-    amount = serializers.IntegerField(label=_('Required Field'))
-    currency = serializers.ChoiceField(choices=choices, label=_("Required Field"))
-
+    amount = serializers.IntegerField(label=_('Required Field'), required=True)
+    currency = serializers.ChoiceField(choices=choices, label=_("Required Field"), required=True)
 
 

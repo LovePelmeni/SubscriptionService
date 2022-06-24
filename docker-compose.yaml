@@ -3,7 +3,7 @@ services:
 
   sub_nginx_server:
     restart: on-failure
-    build: ./nginx/.
+    image: nginx:latest
     container_name: sub_nginx_container
     ports:
       - "8077:82"
@@ -115,7 +115,7 @@ services:
 
 
   sub_application:
-    build: .
+    image: crazycoderrr/subscription_app
     container_name: sub_application
     env_file:
       - ./project/sub_app.env
@@ -168,6 +168,7 @@ services:
 
       networks:
         - sub_app_network
+<<<<<<< HEAD
       deploy:
         replicas: 1
         update_config:
@@ -178,6 +179,8 @@ services:
           constraints:
             - 'labels.TAG=subscription_service'
 
+=======
+>>>>>>> commits
 
 networks:
   sub_app_network:

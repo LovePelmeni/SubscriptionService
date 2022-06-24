@@ -28,7 +28,8 @@ class TestCeleryTaskExecutionCase(TestCase):
         self.idempotency_key = 'some-test-idempotency-key'
 
         self.purchaser_id = APICustomer.objects.create(username='Customer').id
-        self.sub_id = Subscription.objects.create(amount=100, subscription_name='TestSubscription', owner_id=self.purchaser_id).id
+        self.sub_id = Subscription.objects.create(amount=100,
+        subscription_name='TestSubscription', owner_id=self.purchaser_id).id
         self.task_credentials = {
             'idempotency_key': self.idempotency_key,
             'purchaser_id': self.purchaser_id,
@@ -168,10 +169,8 @@ class TestCustomerEventsViaRabbitMQCase(TestCase):
 class SubscriptionFailedDelete(Exception):
     pass
 
-
 class VerificationFailed(Exception):
     pass
-
 
 import pytest, unittest.mock, requests.exceptions
 from . import models
@@ -203,7 +202,6 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
     def test_email_verification_endpoint(self):
 
         from .confirmation import confirmation
-
         http_session_key = self.mocked_email_confirmation_session(fake=False)
         response = test_client.post(path='http://localhost:8000/confirm/delete/'
         'subscription/?session_id=%s' % http_session_key,
@@ -214,16 +212,10 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
 
 
     def test_fail_email_verification_endpoint(self):
-
-        with unittest.mock.patch('main.confirmation.confirmation.'
-        'ConfirmEmailVerificationController.post') as mocked_controller:
-
-            mocked_controller.side_effect = VerificationFailed
-            with self.assertRaises(expected_exception=VerificationFailed):
-                response = test_client.post('http://localhost:8000/confirm/delete/subscription/',
-                headers={'X-CSRF-Token': django.middleware.csrf._get_new_csrf_token()},
-                content_type='application/json')
-                self.assertNotEquals(response.status_code, 201)
+        response = test_client.post('http://localhost:8000/confirm/delete/subscription/',
+        headers={'X-CSRF-Token': django.middleware.csrf._get_new_csrf_token()},
+        content_type='application/json')
+        self.assertNotEquals(response.status_code, 201)
 
 
     def test_fail_delete_subscription(self):
@@ -252,5 +244,86 @@ class TestDeleteSubscriptionFunctionalityCase(unittest.TestCase):
                 signals.process_subscription_delete(subscription_id=self.subscription.id)
                 self.assertLess(len(models.Subscription.objects.all()), 1)
 
+
+class TestSubscriptionDocValidatorCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+        from . import models
+        self.purchaser = models.APICustomer.objects.create()
+        self.owner = models.APICustomer.objects.create()
+        self.subscription = models.Subscription.objects.create()
+
+    def mocked_failure_document(self):
+        return {'invalid_content': 'invalid_content'}
+
+    def mocked_valid_document(self):
+        return {
+            'purchaser_id': self.purchaser.id,
+            'owner_id': self.owner.id,
+            'subscription_id': self.subscription.id,
+            'amount': self.subscription.amount,
+            'currency': self.subscription.currency,
+            'active': True,
+            'idempotency_key': None,
+            'created_at': datetime.datetime.now(),
+            'subscription_task_id': None,
+        }
+
+    @unittest.mock.patch('main.sub_api.SubscriptionDocument.validate')
+    def test_subscription_validator_succeed(self, mocked_validate_method):
+
+        values = self.mocked_valid_document()
+        response = mocked_validate_method(**values)
+        mocked_validate_method.assert_called_with(values)
+        mocked_validate_method.assert_called_once()
+        self.assertIsNotNone(response)
+
+    @unittest.mock.patch('main.sub_api.SubscriptionDocument.validate')
+    def test_subscription_validator_fail(self, mocked_validate_method):
+
+        from . import exceptions
+        mocked_validate_method.side_effect = exceptions.InvalidSubscriptionPayload
+        values = self.mocked_valid_document()
+
+        with self.assertRaises(expected_exception=exceptions.InvalidSubscriptionPayload):
+            response = mocked_validate_method(**values)
+
+            mocked_validate_method.assert_called_with(values)
+            mocked_validate_method.assert_called_once()
+            self.assertIsNone(response)
+
+
+class TestMongoDBControllersCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.purchaser = models.APICustomer.objects.create()
+
+    def mocked_document_content(self):
+        return {}
+
+    @unittest.mock.patch('main.mongo_api.upload_new_subscription', autospec=True)
+    def test_upload_document(self, mocked_uploader):
+        from . import mongo_api
+        document = self.mocked_document_content()
+        mocked_uploader(document)
+        self.assertGreater(len(mongo_api.get_subscription_queryset(
+        purchaser_id=self.purchaser_id)), 0)
+        mocked_uploader.assert_called_once()
+        mocked_uploader.assert_called_with(document)
+
+    @unittest.mock.patch('main.mongo_api.delete_subscription_document', autospec=True)
+    def test_delete_document(self, mocked_deletor):
+        from . import mongo_api
+        subscription = self.mocked_document_content()
+        document_id = mongo_api.upload_new_subscription(subscription=subscription)
+        mocked_deletor(document_id)
+        mocked_deletor.assert_called_once()
+        mocked_deletor.assert_called_with(document_id)
+
+
+    def tearDown(self):
+        """Removes all insertions made during the test."""
+        from . import mongo_api
+        mongo_api.delete_all_subscriptions(self.purchaser.id)
 
 

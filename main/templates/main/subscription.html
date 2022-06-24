@@ -1,0 +1,26 @@
+{% extends 'main/base.html' %}
+
+{{ title }}
+
+
+{% block content %}
+{% for subscription in subscription_queryset %}
+
+    <div class="card">
+        <h1>{{ subscription.subscription_name }}</h1>
+        <div>{{ subscription.subscription_description }}</div>
+        <input id='subscription_id' type="hidden" value="{{ subscription.id }}">
+        <input id='disactivate' type="submit" value="Disactivate">
+        <h6 id="applied at"></h6>
+    </div>
+
+{% endfor %}
+
+
+<script src="{% static 'js/subscription.js' %}"></script>
+
+
+{% endblock %}
+
+
+
