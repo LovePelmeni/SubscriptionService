@@ -184,7 +184,6 @@ class CustomSubscriptionAPIView(viewsets.ModelViewSet):
             raise exception
 
 
-
 class CheckSubPermissionStatus(views.APIView):
 
     permission_classes = (rest_perms.AllowAny,)
@@ -353,6 +352,7 @@ class DeleteSubscription(views.APIView):
         AttributeError, TypeError, KeyError) as exception:
             logger.error('Exception: %s at DeleteSubscription Controller.' % exception)
             raise NotImplementedError
+
 
 
 
