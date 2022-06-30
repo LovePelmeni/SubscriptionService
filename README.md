@@ -1,48 +1,44 @@
-
-# Subscription Service
+# *Subscription Service*
 
 #### API Docs Link: [API Documentation]("http://localhost:8077/swagger/")
 
 #### Project Swarm support Documentation: SWARM.md file in the main directory 
 
-`Subscription Service`
-`Date: 24.05.22`
+~ `Subscription Service`
 
+~ `Date: 24.05.22`
 
-### Short Introduction:
+---
+
+## *Short Introduction*
 
 App allows creating custom subscriptions and apply them on specific period of time. default by `month`.
 Also gives the catalog subs, applied subs, expiration checker and cancellation.
-### Technologies used in the project:
+### *Technologies used in the project*:
 
-```ini
+`Task Schedulers` ~ Celery
 
-[multiprocessing libraries] 
-Celery 
+`MessageBrokers` ~ RabbitMQ
 
-[Message Brokers]
-RabbitMQ 
+`Databases` ~ Redis, PostgresSQL, MongoDB 
 
-[Databases]
-Redis, PostgresSQL, MongoDB
+`Frameworks` ~ Django
 
-[Frameworks]
-Django
-
-```
-
-### Dependencies:
+---
+## *Dependencies*
     
-### `python`  3.8 
-### `postgresql`: 14.0
-### `mongoDB`: latest (up to the date "26.05.22")
-### `rabbitMQ`: latest (up to the date "26.05.22")
-### `nginx`: latest (up to the date "26.05.22")
+#### ~ `python` - 3.8 
+#### ~ `postgresql` - 14.0
+#### ~ `mongoDB` - latest (up to the date "26.05.22")
+#### ~ `rabbitMQ` - latest (up to the date "26.05.22")
+#### ~ `nginx` - latest (up to the date "26.05.22")
 
-### Operational System: tested on macOS and Linux-Ubuntu (18.04.03).
-### Not recommended to use Windows.
+#### Operational System: tested on macOS and Linux-Ubuntu (18.04.03).
+#### Not recommended to use Windows.
 
-# Usage
+--- 
+
+# *Usage*
 
 `1: Make Sure Matching of the dependencies.`
 
@@ -106,8 +102,10 @@ Copy repository:
 
 Tip: `On Exception Highly Recommend rebuilding the application.`
 
+## *External Links* 
 
-### Go check UI-Documentation by clicking at `API Docs` button at the top.
+#### My LinkedIn ~ `https://linkedin/in/klimushin-kirill`
+
+#### Email For Contributions ~ `kirklimushin@gmail.com`
 
 
-### Go check UI-Documentation by clicking at `API Docs` button at the top.
